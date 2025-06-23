@@ -301,4 +301,10 @@ if __name__ == '__main__':
     print("🚀 Iniciando interfaz web moderna...")
     print(f"📱 Accede a: http://localhost:{port}")
 
-    socketio.run(app, debug=debug, host='0.0.0.0', port=port)
+    try:
+        # Intentar usar eventlet primero
+        socketio.run(app, debug=debug, host='0.0.0.0', port=port, async_mode='eventlet')
+    except ImportError:
+        # Si eventlet no está disponible, usar threading
+        print("⚠️ Eventlet no disponible, usando threading...")
+        socketio.run(app, debug=debug, host='0.0.0.0', port=port, async_mode='threading')
