@@ -306,4 +306,5 @@ if __name__ == '__main__':
 
     # Usar threading para mayor compatibilidad
     print("🔧 Usando modo threading para compatibilidad...")
-    socketio.run(app, debug=debug, host='0.0.0.0', port=port, async_mode='threading')
+    socketio.run(app, debug=debug, host='0.0.0.0', port=port,
+                 async_mode='threading', allow_unsafe_werkzeug=True)
