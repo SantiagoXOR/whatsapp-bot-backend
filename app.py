@@ -298,8 +298,11 @@ if __name__ == '__main__':
     port = int(os.getenv('PORT', 5000))
     debug = os.getenv('FLASK_ENV') != 'production'
 
-    print("🚀 Iniciando interfaz web moderna...")
-    print(f"📱 Accede a: http://localhost:{port}")
+    print("🚀 Iniciando WhatsApp Bot Backend...")
+    print(f"🌐 Servidor corriendo en puerto {port}")
+    print(f"🔧 Modo debug: {debug}")
+    print("🔄 Despliegue simplificado v2")
+    print("=" * 50)
 
     # Usar threading para mayor compatibilidad
     print("🔧 Usando modo threading para compatibilidad...")
