@@ -8,6 +8,3 @@ openpyxl==3.1.2
 selenium==4.15.2
 webdriver-manager==4.0.1
 python-dotenv==1.0.0
-gunicorn==21.2.0
-eventlet==0.33.3
-greenlet==2.0.2
