@@ -1,0 +1,286 @@
+<!DOCTYPE html>
+<html lang="es" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>WhatsApp Bot - Interfaz Moderna</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.7.2/socket.io.js"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <link href="/static/styles.css" rel="stylesheet">
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        border: "hsl(var(--border))",
+                        background: "hsl(var(--background))",
+                        foreground: "hsl(var(--foreground))",
+                        primary: {
+                            DEFAULT: "hsl(var(--primary))",
+                            foreground: "hsl(var(--primary-foreground))",
+                        },
+                        secondary: {
+                            DEFAULT: "hsl(var(--secondary))",
+                            foreground: "hsl(var(--secondary-foreground))",
+                        },
+                        muted: {
+                            DEFAULT: "hsl(var(--muted))",
+                            foreground: "hsl(var(--muted-foreground))",
+                        },
+                        accent: {
+                            DEFAULT: "hsl(var(--accent))",
+                            foreground: "hsl(var(--accent-foreground))",
+                        },
+                        destructive: {
+                            DEFAULT: "hsl(var(--destructive))",
+                            foreground: "hsl(var(--destructive-foreground))",
+                        },
+                    },
+                }
+            }
+        }
+    </script>
+    <style>
+        :root {
+            --background: 0 0% 100%;
+            --foreground: 222.2 84% 4.9%;
+            --muted: 210 40% 98%;
+            --muted-foreground: 215.4 16.3% 46.9%;
+            --popover: 0 0% 100%;
+            --popover-foreground: 222.2 84% 4.9%;
+            --card: 0 0% 100%;
+            --card-foreground: 222.2 84% 4.9%;
+            --border: 214.3 31.8% 91.4%;
+            --input: 214.3 31.8% 91.4%;
+            --primary: 222.2 47.4% 11.2%;
+            --primary-foreground: 210 40% 98%;
+            --secondary: 210 40% 96.1%;
+            --secondary-foreground: 222.2 47.4% 11.2%;
+            --accent: 210 40% 96.1%;
+            --accent-foreground: 222.2 47.4% 11.2%;
+            --destructive: 0 84.2% 60.2%;
+            --destructive-foreground: 210 40% 98%;
+            --ring: 222.2 84% 4.9%;
+            --radius: 0.5rem;
+        }
+        
+        .dark {
+            --background: 222.2 84% 4.9%;
+            --foreground: 210 40% 98%;
+            --muted: 217.2 32.6% 17.5%;
+            --muted-foreground: 215 20.2% 65.1%;
+            --popover: 222.2 84% 4.9%;
+            --popover-foreground: 210 40% 98%;
+            --card: 222.2 84% 4.9%;
+            --card-foreground: 210 40% 98%;
+            --border: 217.2 32.6% 17.5%;
+            --input: 217.2 32.6% 17.5%;
+            --primary: 210 40% 98%;
+            --primary-foreground: 222.2 47.4% 11.2%;
+            --secondary: 217.2 32.6% 17.5%;
+            --secondary-foreground: 210 40% 98%;
+            --accent: 217.2 32.6% 17.5%;
+            --accent-foreground: 210 40% 98%;
+            --destructive: 0 62.8% 30.6%;
+            --destructive-foreground: 210 40% 98%;
+            --ring: 212.7 26.8% 83.9%;
+        }
+        
+        .animate-pulse {
+            animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+        }
+        
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: .5; }
+        }
+        
+        .animate-spin {
+            animation: spin 1s linear infinite;
+        }
+        
+        @keyframes spin {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body class="bg-background text-foreground min-h-screen">
+    <!-- Header -->
+    <header class="border-b border-border bg-card">
+        <div class="container mx-auto px-4 py-4">
+            <div class="flex items-center justify-between">
+                <div class="flex items-center space-x-3">
+                    <div class="w-10 h-10 bg-green-500 rounded-lg flex items-center justify-center">
+                        <i class="fab fa-whatsapp text-white text-xl"></i>
+                    </div>
+                    <div>
+                        <h1 class="text-2xl font-bold">WhatsApp Bot</h1>
+                        <p class="text-sm text-muted-foreground">Envío automatizado de mensajes</p>
+                    </div>
+                </div>
+                <button id="themeToggle" class="p-2 rounded-lg border border-border hover:bg-accent transition-colors">
+                    <i class="fas fa-moon text-lg"></i>
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="container mx-auto px-4 py-8">
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+            <!-- File Upload Section -->
+            <div class="lg:col-span-2">
+                <div class="bg-card border border-border rounded-lg p-6 shadow-sm">
+                    <h2 class="text-xl font-semibold mb-4 flex items-center">
+                        <i class="fas fa-upload mr-2 text-primary"></i>
+                        Archivo de Contactos
+                    </h2>
+                    
+                    <!-- Drag & Drop Area -->
+                    <div id="dropZone" class="upload-area border-2 border-dashed border-border rounded-lg p-8 text-center hover:border-primary transition-colors cursor-pointer">
+                        <div id="dropContent">
+                            <i class="fas fa-cloud-upload-alt text-4xl text-muted-foreground mb-4"></i>
+                            <p class="text-lg font-medium mb-2">Arrastra tu archivo aquí</p>
+                            <p class="text-sm text-muted-foreground mb-4">o haz clic para seleccionar</p>
+                            <button class="btn-primary bg-primary text-primary-foreground px-4 py-2 rounded-lg hover:bg-primary/90 transition-colors">
+                                <i class="fas fa-folder-open mr-2"></i>
+                                Seleccionar Archivo
+                            </button>
+                            <div class="mt-4 text-xs text-muted-foreground">
+                                Formatos soportados: .xlsx, .xls, .csv (máx. 16MB)
+                            </div>
+                        </div>
+                        <div id="uploadProgress" class="hidden">
+                            <div class="spinner mx-auto mb-4"></div>
+                            <p class="text-sm text-muted-foreground">Procesando archivo...</p>
+                            <div class="mt-2 w-full bg-secondary rounded-full h-2">
+                                <div class="progress-bar bg-primary h-2 rounded-full" style="width: 0%"></div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <input type="file" id="fileInput" class="hidden" accept=".csv,.xlsx,.xls">
+                    
+                    <!-- File Info -->
+                    <div id="fileInfo" class="hidden mt-4 p-4 bg-accent rounded-lg">
+                        <div class="flex items-center justify-between">
+                            <div class="flex items-center space-x-3">
+                                <i class="fas fa-file-excel text-green-500 text-xl"></i>
+                                <div>
+                                    <p id="fileName" class="font-medium"></p>
+                                    <p id="fileStats" class="text-sm text-muted-foreground"></p>
+                                </div>
+                            </div>
+                            <button id="removeFile" class="text-destructive hover:text-destructive/80">
+                                <i class="fas fa-times"></i>
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <!-- Contact Preview -->
+                    <div id="contactPreview" class="hidden mt-4">
+                        <h3 class="font-medium mb-3">Vista Previa de Contactos</h3>
+                        <div id="contactList" class="space-y-2 max-h-40 overflow-y-auto"></div>
+                    </div>
+                </div>
+                
+                <!-- Configuration Section -->
+                <div class="bg-card border border-border rounded-lg p-6 shadow-sm mt-6">
+                    <h2 class="text-xl font-semibold mb-4 flex items-center">
+                        <i class="fas fa-cog mr-2 text-primary"></i>
+                        Configuración
+                    </h2>
+                    
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-sm font-medium mb-2">Límite de Mensajes</label>
+                            <input type="number" id="messageLimit" value="50" min="1" max="1000" 
+                                   class="w-full px-3 py-2 border border-border rounded-lg bg-background focus:ring-2 focus:ring-primary focus:border-transparent">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium mb-2">Delay (segundos)</label>
+                            <input type="number" id="messageDelay" value="20" min="5" max="120" 
+                                   class="w-full px-3 py-2 border border-border rounded-lg bg-background focus:ring-2 focus:ring-primary focus:border-transparent">
+                        </div>
+                    </div>
+                    
+                    <div class="mt-4">
+                        <label class="block text-sm font-medium mb-2">Mensaje Personalizado</label>
+                        <textarea id="messageTemplate" rows="3" placeholder="Hola {nombre}, este es un mensaje automático."
+                                  class="w-full px-3 py-2 border border-border rounded-lg bg-background focus:ring-2 focus:ring-primary focus:border-transparent resize-none"></textarea>
+                        <p class="text-xs text-muted-foreground mt-1">Usa {nombre} para personalizar con el nombre del contacto</p>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Control Panel -->
+            <div class="space-y-6">
+                <!-- Status Card -->
+                <div class="bg-card border border-border rounded-lg p-6 shadow-sm">
+                    <h2 class="text-xl font-semibold mb-4 flex items-center">
+                        <i class="fas fa-info-circle mr-2 text-primary"></i>
+                        Estado
+                    </h2>
+                    
+                    <div id="statusDisplay" class="space-y-3">
+                        <div class="flex items-center justify-between">
+                            <span class="text-sm text-muted-foreground">Estado:</span>
+                            <span id="botStatus" class="px-2 py-1 rounded-full text-xs font-medium bg-secondary text-secondary-foreground">Inactivo</span>
+                        </div>
+                        <div class="flex items-center justify-between">
+                            <span class="text-sm text-muted-foreground">Contactos:</span>
+                            <span id="totalContacts">0</span>
+                        </div>
+                        <div class="flex items-center justify-between">
+                            <span class="text-sm text-muted-foreground">Enviados:</span>
+                            <span id="messagesSent">0</span>
+                        </div>
+                    </div>
+                    
+                    <!-- Progress Bar -->
+                    <div id="progressContainer" class="hidden mt-4">
+                        <div class="flex items-center justify-between mb-2">
+                            <span class="text-sm text-muted-foreground">Progreso</span>
+                            <span id="progressText" class="text-sm font-medium">0%</span>
+                        </div>
+                        <div class="w-full bg-secondary rounded-full h-2">
+                            <div id="progressBar" class="bg-primary h-2 rounded-full transition-all duration-300" style="width: 0%"></div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Control Buttons -->
+                <div class="bg-card border border-border rounded-lg p-6 shadow-sm">
+                    <h2 class="text-xl font-semibold mb-4 flex items-center">
+                        <i class="fas fa-play-circle mr-2 text-primary"></i>
+                        Control
+                    </h2>
+                    
+                    <div class="space-y-3">
+                        <button id="startBot" class="btn-success w-full bg-green-500 hover:bg-green-600 text-white font-medium py-3 px-4 rounded-lg transition-colors flex items-center justify-center tooltip" data-tooltip="Iniciar el envío de mensajes">
+                            <i class="fas fa-play mr-2"></i>
+                            Iniciar Bot
+                        </button>
+                        <button id="stopBot" class="btn-danger w-full bg-destructive hover:bg-destructive/90 text-destructive-foreground font-medium py-3 px-4 rounded-lg transition-colors flex items-center justify-center hidden tooltip" data-tooltip="Detener el envío">
+                            <i class="fas fa-stop mr-2"></i>
+                            Detener Bot
+                        </button>
+                        <button id="testConnection" class="w-full bg-blue-500 hover:bg-blue-600 text-white font-medium py-2 px-4 rounded-lg transition-colors flex items-center justify-center tooltip" data-tooltip="Probar conexión con WhatsApp Web">
+                            <i class="fas fa-wifi mr-2"></i>
+                            Probar Conexión
+                        </button>
+                    </div>
+                </div>
+                
+                <!-- Notifications -->
+                <div id="notifications" class="space-y-2"></div>
+            </div>
+        </div>
+    </main>
+
+    <script src="/static/app.js"></script>
+</body>
+</html>
